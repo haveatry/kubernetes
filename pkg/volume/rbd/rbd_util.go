@@ -196,7 +196,8 @@ func (util *RBDUtil) fencing(b rbdBuilder) error {
 	if (&b).GetAttributes().ReadOnly {
 		return nil
 	}
-	return util.rbdLock(b, true)
+	//return util.rbdLock(b, true)
+	return nil
 }
 
 func (util *RBDUtil) defencing(c rbdCleaner) error {
@@ -205,7 +206,8 @@ func (util *RBDUtil) defencing(c rbdCleaner) error {
 		return nil
 	}
 
-	return util.rbdLock(*c.rbdBuilder, false)
+	//return util.rbdLock(*c.rbdBuilder, false)
+	return nil
 }
 
 func (util *RBDUtil) AttachDisk(b rbdBuilder) error {

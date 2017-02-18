@@ -19,7 +19,7 @@ package iptables
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
+	//"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -341,7 +341,7 @@ func (runner *runner) restoreInternal(args []string, data []byte, flush FlushFla
 		return err
 	}
 	// make sure we delete the temp file
-	defer os.Remove(temp.Name())
+	//defer os.Remove(temp.Name())
 	// Put the filename at the end of args.
 	// NOTE: the filename must be at the end.
 	// See: https://git.netfilter.org/iptables/commit/iptables-restore.c?id=e6869a8f59d779ff4d5a0984c86d80db70784962
