@@ -234,4 +234,6 @@ func (s *KubeletServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.NodeIP, "node-ip", s.NodeIP, "IP address of the node. If set, kubelet will use this IP address for the node")
 	fs.BoolVar(&s.EnableCustomMetrics, "enable-custom-metrics", s.EnableCustomMetrics, "Support for gathering custom metrics.")
 	fs.StringVar(&s.RuntimeCgroups, "runtime-cgroups", s.RuntimeCgroups, "Optional absolute name of cgroups to create and run the runtime in.")
+	fs.StringVar(&kubetypes.ContainerLogSize,"container-log-max-size", kubetypes.ContainerLogSize,     "configure container log size in this node.")
+	fs.StringVar(&kubetypes.ContainerLogMaxFiles,"container-log-max-file", kubetypes.ContainerLogMaxFiles,     "configure container log File size in this node.")
 }

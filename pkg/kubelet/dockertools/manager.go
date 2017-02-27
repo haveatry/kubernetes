@@ -581,7 +581,21 @@ func (dm *DockerManager) runContainer(
 		CPUShares:   cpuShares,
 		SecurityOpt: securityOpts,
 	}
-
+	// config log size wsj
+	// start
+	if len(kubetypes.ContainerLogSize) != 0 {
+		conf := docker.LogConfig{
+			Type: "json-file",
+			Config: map[string]string{},
+		}
+		conf.Type = "json-file"
+		conf.Config["max-size"] = kubetypes.ContainerLogSize
+		if len(kubetypes.ContainerLogMaxFiles) != 0 {
+			conf.Config["max-file"] = kubetypes.ContainerLogMaxFiles
+		} 
+		hc.LogConfig = conf
+	}
+	// end
 	if dm.cpuCFSQuota {
 		// if cpuLimit.Amount is nil, then the appropriate default value is returned to allow full usage of cpu resource.
 		cpuQuota, cpuPeriod := milliCPUToQuota(cpuLimit.MilliValue())
