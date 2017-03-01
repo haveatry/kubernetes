@@ -354,14 +354,15 @@ func (proxier *Proxier) sameConfig(info *serviceInfo, service *api.Service, port
 		return false
 	}
 	//onlyNodeLocalEndpoints := apiservice.NeedsHealthCheck(service) && featuregate.DefaultFeatureGate.ExternalTrafficLocalOnly()
-	onlyNodeLocalEndpoints := apiservice.NeedsHealthCheck(service)
-	if info.onlyNodeLocalEndpoints != onlyNodeLocalEndpoints {
-		return false
-	}
 	/*
-		if !reflect.DeepEqual(info.loadBalancerSourceRanges, service.Spec.LoadBalancerSourceRanges) {
+		onlyNodeLocalEndpoints := apiservice.NeedsHealthCheck(service)
+		if info.onlyNodeLocalEndpoints != onlyNodeLocalEndpoints {
 			return false
 		}
+
+			if !reflect.DeepEqual(info.loadBalancerSourceRanges, service.Spec.LoadBalancerSourceRanges) {
+				return false
+			}
 	*/
 	return true
 }
@@ -454,6 +455,7 @@ func (proxier *Proxier) OnServiceUpdate(allServices []api.Service) {
 			//info.loadBalancerSourceRanges = service.Spec.LoadBalancerSourceRanges
 			//info.onlyNodeLocalEndpoints = apiservice.NeedsHealthCheck(service) && featuregate.DefaultFeatureGate.ExternalTrafficLocalOnly()
 			info.onlyNodeLocalEndpoints = apiservice.NeedsHealthCheck(service)
+			info.onlyNodeLocalEndpoints = true
 			glog.V(4).Infof("apiservice.NeedsHealthCheck(service) %v", apiservice.NeedsHealthCheck(service))
 			/*
 				if info.onlyNodeLocalEndpoints {
@@ -921,7 +923,7 @@ func (proxier *Proxier) syncProxyRules() {
 		activeNATChains[svcChain] = true
 
 		svcXlbChain := serviceLBChainName(svcName, protocol)
-		if svcInfo.onlyNodeLocalEndpoints {
+		if svcInfo.onlyNodeLocalEndpoints && svcInfo.nodePort != 0 {
 			// Only for services with the externalTraffic annotation set to OnlyLocal
 			// create the per-service LB chain, retaining counters if possible.
 			if lbChain, ok := existingNATChains[svcXlbChain]; ok {
@@ -1101,7 +1103,7 @@ func (proxier *Proxier) syncProxyRules() {
 			// Nodeports need SNAT.
 			writeLine(natRules, append(args, "-j", string(KubeMarkMasqChain))...)
 			// Jump to the service chain.
-			writeLine(natRules, append(args, "-j", string(svcChain))...)
+			writeLine(natRules, append(args, "-j", string(svcXlbChain))...)
 		}
 
 		// If the service has no endpoints then reject packets.
@@ -1186,7 +1188,7 @@ func (proxier *Proxier) syncProxyRules() {
 		}
 
 		// The logic below this applies only if this service is marked as OnlyLocal
-		if !svcInfo.onlyNodeLocalEndpoints {
+		if svcInfo.onlyNodeLocalEndpoints == false || svcInfo.nodePort == 0 {
 			continue
 		}
 
