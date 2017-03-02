@@ -33,6 +33,7 @@ import (
 
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	cadvisorapiv2 "github.com/google/cadvisor/info/v2"
+	"github.com/stretchr/testify/assert"
 	"k8s.io/kubernetes/pkg/api"
 	apierrors "k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/api/resource"
@@ -88,6 +89,18 @@ type fakeHTTP struct {
 func (f *fakeHTTP) Get(url string) (*http.Response, error) {
 	f.url = url
 	return nil, f.err
+}
+
+// fakeImageGCManager is a fake image gc manager for testing. It will return image
+// list from fake runtime directly instead of caching it.
+type fakeImageManager struct {
+	fakeImageService kubecontainer.Runtime
+	imageManager
+}
+
+func (f *fakeImageManager) GetImageList() ([]kubecontainer.Image, error) {
+	return f.fakeImageService.ListImages()
+
 }
 
 type TestKubelet struct {
@@ -181,7 +194,13 @@ func newTestKubelet(t *testing.T) *TestKubelet {
 		HighThresholdPercent: 90,
 		LowThresholdPercent:  80,
 	}
-	kubelet.imageManager, err = newImageManager(fakeRuntime, mockCadvisor, fakeRecorder, fakeNodeRef, fakeImageGCPolicy)
+	//kubelet.imageManager, err = newImageManager(fakeRuntime, mockCadvisor, fakeRecorder, fakeNodeRef, fakeImageGCPolicy)
+	imageManager, err := newImageManager(fakeRuntime, mockCadvisor, fakeRecorder, fakeNodeRef, fakeImageGCPolicy)
+	assert.NoError(t, err)
+	kubelet.imageManager = &fakeImageManager{
+		fakeImageService: fakeRuntime,
+		imageManager:     imageManager,
+	}
 	fakeClock := util.NewFakeClock(time.Now())
 	kubelet.backOff = util.NewBackOff(time.Second, time.Minute)
 	kubelet.backOff.Clock = fakeClock
