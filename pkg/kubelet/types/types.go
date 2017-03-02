@@ -75,3 +75,6 @@ type Reservation struct {
 	// Kubernetes represents resources reserved for kubernetes system components.
 	Kubernetes api.ResourceList
 }
+
+var ContainerLogSize string
+var ContainerLogMaxFiles string
