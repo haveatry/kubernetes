@@ -140,6 +140,8 @@ func (s *KubeletServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.ManifestURL, "manifest-url", s.ManifestURL, "URL for accessing the container manifest")
 	fs.StringVar(&s.ManifestURLHeader, "manifest-url-header", s.ManifestURLHeader, "HTTP header to use when accessing the manifest URL, with the key separated from the value with a ':', as in 'key:value'")
 	fs.BoolVar(&s.EnableServer, "enable-server", s.EnableServer, "Enable the Kubelet's server")
+	// BONC-huyuepeng add a new flag , used by docker CPU set
+	fs.BoolVar(&kubetypes.OnlyUseCPUShares, "only-use-cpu-shares", kubetypes.OnlyUseCPUShares, "Only use CPU Shares for docker")
 	fs.Var(componentconfig.IPVar{&s.Address}, "address", "The IP address for the Kubelet to serve on (set to 0.0.0.0 for all interfaces)")
 	fs.UintVar(&s.Port, "port", s.Port, "The port for the Kubelet to serve on.")
 	fs.UintVar(&s.ReadOnlyPort, "read-only-port", s.ReadOnlyPort, "The read-only port for the Kubelet to serve on with no authentication/authorization (set to 0 to disable)")
@@ -234,6 +236,6 @@ func (s *KubeletServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.NodeIP, "node-ip", s.NodeIP, "IP address of the node. If set, kubelet will use this IP address for the node")
 	fs.BoolVar(&s.EnableCustomMetrics, "enable-custom-metrics", s.EnableCustomMetrics, "Support for gathering custom metrics.")
 	fs.StringVar(&s.RuntimeCgroups, "runtime-cgroups", s.RuntimeCgroups, "Optional absolute name of cgroups to create and run the runtime in.")
-	fs.StringVar(&kubetypes.ContainerLogSize,"container-log-max-size", kubetypes.ContainerLogSize,     "configure container log size in this node.")
-	fs.StringVar(&kubetypes.ContainerLogMaxFiles,"container-log-max-file", kubetypes.ContainerLogMaxFiles,     "configure container log File size in this node.")
+	fs.StringVar(&kubetypes.ContainerLogSize, "container-log-max-size", kubetypes.ContainerLogSize, "configure container log size in this node.")
+	fs.StringVar(&kubetypes.ContainerLogMaxFiles, "container-log-max-file", kubetypes.ContainerLogMaxFiles, "configure container log File size in this node.")
 }
