@@ -174,7 +174,9 @@ func NewMainKubelet(
 	registerSchedulable bool,
 	standaloneMode bool,
 	clusterDomain string,
-	clusterDNS net.IP,
+	// wsj fix
+	// clusterDNS net.IP,
+	clusterDNS []net.IP,
 	masterServiceNamespace string,
 	volumePlugins []volume.VolumePlugin,
 	networkPlugins []network.NetworkPlugin,
@@ -572,7 +574,9 @@ type Kubelet struct {
 	clusterDomain string
 
 	// If non-nil, use this for container DNS server.
-	clusterDNS net.IP
+	// wsj fix
+	// clusterDNS net.IP
+	clusterDNS []net.IP
 
 	masterServiceNamespace string
 	serviceLister          serviceLister
@@ -1572,8 +1576,11 @@ func (kl *Kubelet) podFieldSelectorRuntimeValue(fs *api.ObjectFieldSelector, pod
 // GetClusterDNS returns a list of the DNS servers and a list of the DNS search
 // domains of the cluster.
 func (kl *Kubelet) GetClusterDNS(pod *api.Pod) ([]string, []string, error) {
+
+	glog.Errorf("_+_+_+_+_+_: pod: %v.\n", pod)
 	var hostDNS, hostSearch []string
 	// Get host DNS settings
+	// wsj added
 	if kl.resolverConfig != "" {
 		f, err := os.Open(kl.resolverConfig)
 		if err != nil {
@@ -1586,8 +1593,12 @@ func (kl *Kubelet) GetClusterDNS(pod *api.Pod) ([]string, []string, error) {
 			return nil, nil, err
 		}
 	}
+	glog.Errorf("========= dns: %v, search: %v.;;; pod.Spec.DNSPolicy: %v \n", hostDNS, hostSearch, pod.Spec.DNSPolicy)
 	useClusterFirstPolicy := pod.Spec.DNSPolicy == api.DNSClusterFirst
-	if useClusterFirstPolicy && kl.clusterDNS == nil {
+	// wsj fix
+	// if useClusterFirstPolicy && kl.clusterDNS == nil {
+	if useClusterFirstPolicy && len(kl.clusterDNS) == 0 {
+		glog.Errorf("========= user default policy .")
 		// clusterDNS is not known.
 		// pod with ClusterDNSFirst Policy cannot be created
 		kl.recorder.Eventf(pod, api.EventTypeWarning, "MissingClusterDNS", "kubelet does not have ClusterDNS IP configured and cannot create Pod using %q policy. Falling back to DNSDefault policy.", pod.Spec.DNSPolicy)
@@ -1610,13 +1621,20 @@ func (kl *Kubelet) GetClusterDNS(pod *api.Pod) ([]string, []string, error) {
 			hostDNS = []string{"127.0.0.1"}
 			hostSearch = []string{"."}
 		}
+		glog.Errorf("========= nds: %v, search: %v, domain: %v.", hostDNS, hostSearch, kl.clusterDomain)
 		return hostDNS, hostSearch, nil
 	}
 
 	// for a pod with DNSClusterFirst policy, the cluster DNS server is the only nameserver configured for
 	// the pod. The cluster DNS server itself will forward queries to other nameservers that is configured to use,
 	// in case the cluster DNS server cannot resolve the DNS query itself
-	dns := []string{kl.clusterDNS.String()}
+	// wsj fix
+	// dns := []string{kl.clusterDNS.String()}
+	dns := []string{}
+	for _, cDns := range kl.clusterDNS {
+		dns = append(dns, cDns.String())
+	}
+	glog.Errorf("========= clusterDNS: %v, clusterDomain: %v.", kl.clusterDNS, kl.clusterDomain)
 
 	var dnsSearch []string
 	if kl.clusterDomain != "" {
@@ -1626,6 +1644,7 @@ func (kl *Kubelet) GetClusterDNS(pod *api.Pod) ([]string, []string, error) {
 	} else {
 		dnsSearch = hostSearch
 	}
+	glog.Errorf("========= dns: %v; search: %v; clusterDNS: %v.", dns, dnsSearch, kl.clusterDNS)
 	return dns, dnsSearch, nil
 }
 
@@ -1655,6 +1674,7 @@ func parseResolvConf(reader io.Reader, dnsScrubber dnsScrubber) (nameservers []s
 	// Lines of the form "search example.com" overrule - last one wins.
 	searches = []string{}
 
+	glog.Errorf("========= /etc/resolv.conf file: %v, dnsScrubber: %v.\n", string(file), dnsScrubber)
 	lines := strings.Split(string(file), "\n")
 	for l := range lines {
 		trimmed := strings.TrimSpace(lines[l])

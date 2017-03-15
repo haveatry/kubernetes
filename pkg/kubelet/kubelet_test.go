@@ -1179,7 +1179,9 @@ func TestDNSConfigurationParams(t *testing.T) {
 
 	clusterNS := "203.0.113.1"
 	kubelet.clusterDomain = "kubernetes.io"
-	kubelet.clusterDNS = net.ParseIP(clusterNS)
+	// wsj fix
+	// kubelet.clusterDNS = net.ParseIP(clusterNS)
+	kubelet.clusterDNS = []net.IP{net.ParseIP(clusterNS),}
 
 	pods := newTestPods(2)
 	pods[0].Spec.DNSPolicy = api.DNSClusterFirst

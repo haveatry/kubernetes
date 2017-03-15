@@ -179,7 +179,11 @@ func UnsecuredKubeletConfig(s *options.KubeletServer) (*KubeletConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	// wsj fix
+	tmp := []net.IP{}
+	for _, sDns := range s.ClusterDNS {
+		tmp = append(tmp, net.ParseIP(sDns))
+	}
 	return &KubeletConfig{
 		Address:                   net.ParseIP(s.Address),
 		AllowPrivileged:           s.AllowPrivileged,
@@ -188,7 +192,9 @@ func UnsecuredKubeletConfig(s *options.KubeletServer) (*KubeletConfig, error) {
 		VolumeStatsAggPeriod:      s.VolumeStatsAggPeriod.Duration,
 		CgroupRoot:                s.CgroupRoot,
 		Cloud:                     nil, // cloud provider might start background processes
-		ClusterDNS:                net.ParseIP(s.ClusterDNS),
+		// wsj fix
+		// ClusterDNS:                net.ParseIP(s.ClusterDNS),
+		ClusterDNS:		   tmp,
 		ClusterDomain:             s.ClusterDomain,
 		ConfigFile:                s.Config,
 		ConfigureCBR0:             s.ConfigureCBR0,
@@ -502,7 +508,7 @@ func SimpleKubelet(client *clientset.Clientset,
 	osInterface kubecontainer.OSInterface,
 	fileCheckFrequency, httpCheckFrequency, minimumGCAge, nodeStatusUpdateFrequency, syncFrequency, outOfDiskTransitionFrequency time.Duration,
 	maxPods int,
-	containerManager cm.ContainerManager, clusterDNS net.IP) *KubeletConfig {
+	containerManager cm.ContainerManager, clusterDNS []net.IP) *KubeletConfig {
 	imageGCPolicy := kubelet.ImageGCPolicy{
 		HighThresholdPercent: 90,
 		LowThresholdPercent:  80,
@@ -697,7 +703,9 @@ type KubeletConfig struct {
 	VolumeStatsAggPeriod           time.Duration
 	CgroupRoot                     string
 	Cloud                          cloudprovider.Interface
-	ClusterDNS                     net.IP
+	// wsj fix
+	// ClusterDNS                     net.IP
+	ClusterDNS                     []net.IP
 	ClusterDomain                  string
 	ConfigFile                     string
 	ConfigureCBR0                  bool

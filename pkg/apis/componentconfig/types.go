@@ -211,7 +211,8 @@ type KubeletConfiguration struct {
 	// clusterDNS is the IP address for a cluster DNS server.  If set, kubelet
 	// will configure all containers to use this for DNS resolution in
 	// addition to the host's DNS servers
-	ClusterDNS string `json:"clusterDNS"`
+	// wsj fix
+	ClusterDNS []string `json:"clusterDNS"`
 	// streamingConnectionIdleTimeout is the maximum time a streaming connection
 	// can be idle before the connection is automatically closed.
 	StreamingConnectionIdleTimeout unversioned.Duration `json:"streamingConnectionIdleTimeout"`
