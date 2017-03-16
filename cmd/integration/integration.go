@@ -233,7 +233,9 @@ func startComponents(firstManifestURL, secondManifestURL string) (string, string
 		10*time.Second, /* SyncFrequency */
 		10*time.Second, /* OutOfDiskTransitionFrequency */
 		40,             /* MaxPods */
-		cm, net.ParseIP("127.0.0.1"))
+		// wsj
+		// cm, net.ParseIP("127.0.0.1"))
+		cm, []net.IP{net.ParseIP("127.0.0.1")})
 
 	kubeletapp.RunKubelet(kcfg)
 	// Kubelet (machine)
@@ -267,7 +269,7 @@ func startComponents(firstManifestURL, secondManifestURL string) (string, string
 
 		40, /* MaxPods */
 		cm,
-		net.ParseIP("127.0.0.1"))
+		[]net.IP{net.ParseIP("127.0.0.1")})
 
 	kubeletapp.RunKubelet(kcfg)
 	return apiServer.URL, configFilePath
