@@ -418,3 +418,7 @@ leader-elect-retry-period
 watch-cache-sizes
 lock-file
 hairpin-mode
+container-log-max-file
+container-log-max-size
+only-use-cpu-shares
+

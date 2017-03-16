@@ -78,3 +78,6 @@ type Reservation struct {
 
 var ContainerLogSize string
 var ContainerLogMaxFiles string
+
+// BONC hyp added
+var OnlyUseCPUShares = true
