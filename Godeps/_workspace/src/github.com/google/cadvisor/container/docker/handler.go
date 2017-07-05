@@ -244,6 +244,10 @@ func libcontainerConfigToContainerSpec(config *libcontainerconfigs.Config, mi *i
 	spec.Memory.Limit = math.MaxUint64
 	spec.Memory.SwapLimit = math.MaxUint64
 
+	// wsj add
+	spec.HasBoncMetrics = true
+	spec.Bonc.Threads = 0
+
 	if config.Cgroups.Resources != nil {
 		if config.Cgroups.Resources.Memory > 0 {
 			spec.Memory.Limit = uint64(config.Cgroups.Resources.Memory)
@@ -299,6 +303,24 @@ func (self *dockerContainerHandler) GetSpec() (info.ContainerSpec, error) {
 	spec.HasNetwork = self.needNet()
 
 	return spec, err
+}
+
+
+func (self *dockerContainerHandler) getBoncStats(stats *info.ContainerStats) error {
+	if self.ignoreMetrics.Has(container.BoncMetrics) {
+		return nil
+	}
+	if self.pid == 0 {
+		return nil
+	}
+	sum, sSum, err := containerlibcontainer.GetThreads(self.rootFs, self.pid)
+	// glog.Errorf(" [ test ] sum: %d; sSum: %d; err: %v.", sum, sSum, err)
+	if err != nil {
+		return err
+	}
+	stats.BoncMetrics.Threads = uint32(sum)
+	stats.BoncMetrics.Sockets = uint32(sSum)
+	return nil
 }
 
 func (self *dockerContainerHandler) getFsStats(stats *info.ContainerStats) error {
@@ -361,7 +383,12 @@ func (self *dockerContainerHandler) GetStats() (*info.ContainerStats, error) {
 	if err != nil {
 		return stats, err
 	}
-
+	// Get bonc stats.
+	err = self.getBoncStats(stats)
+	if err != nil {
+		return stats, err
+	}
+	// glog.Errorf(" [ test ] thread: %d; self.RootFs: %s; self.pid: %v.", stats.BoncMetrics.Threads, self.rootFs, self.pid)
 	return stats, nil
 }
 

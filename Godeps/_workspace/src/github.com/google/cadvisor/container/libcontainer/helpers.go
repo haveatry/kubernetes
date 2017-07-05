@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+        "sort"
 	"github.com/google/cadvisor/container"
 	info "github.com/google/cadvisor/info/v1"
 
@@ -446,4 +446,109 @@ func toContainerStats(libcontainerStats *libcontainer.Stats) *info.ContainerStat
 		toContainerStats3(libcontainerStats, ret)
 	}
 	return ret
+}
+
+// thread
+type Process struct {
+        Pid       string
+        Command   string
+        Arguments string
+        Started   time.Time
+}
+
+type byModTime []os.FileInfo
+
+func (bmt byModTime) Len() int      { return len(bmt) }
+func (bmt byModTime) Swap(i, j int) { bmt[i], bmt[j] = bmt[j], bmt[i] }
+func (bmt byModTime) Less(i, j int) bool {
+        // If the creation times are identical, sort by filename (pid) instead.
+        if bmt[i].ModTime() == bmt[j].ModTime() {
+                return sort.StringsAreSorted([]string{bmt[i].Name(), bmt[j].Name()})
+        }
+        return bmt[i].ModTime().UnixNano() < bmt[j].ModTime().UnixNano()
+}
+
+func GetSocket(spath, pid string) (int, error) {
+
+	fName := path.Join(spath, pid, "/fd")
+	files, err := ioutil.ReadDir(fName)
+	if err != nil {
+		return 0, nil
+	}
+	var sum int = 0
+	var mSock map[string]string = make(map[string]string)
+	
+	sort.Sort(byModTime(files))
+	for _, f := range files {
+		name, err := os.Readlink("/proc/" + pid + "/fd/" + f.Name())
+		if strings.Contains(name, "socket:[") && err == nil {
+			iNode := getInode(name)
+			if _, ok := mSock[iNode]; ok == false {
+				mSock[iNode] = ""
+				sum += 1
+			}	
+		}
+	}
+	return sum, nil
+}
+
+func getThreadByPth(rootFs, pid string) (int, error) {
+        fName := path.Join(rootFs, pid, "/status")
+        info, err := ioutil.ReadFile(fName)
+        if err != nil {
+                return 0, err
+        }
+
+        tmp := strings.Split(string(info), "\n")
+        for _, v := range tmp {
+                if strings.Contains(v, "Threads:") {
+                        th := strings.Split(v, "Threads:")
+                        if len(th) == 2 {
+                                num := strings.Trim(th[1], "\t")
+                                return strconv.Atoi(num)
+                        }
+                }
+        }
+        return 0, nil
+}
+
+func GetThreads(rootFs string, pid int) (int, int, error){
+        fName := path.Join(rootFs, "proc", strconv.Itoa(pid), "root/proc")
+        files, err := ioutil.ReadDir(fName)
+        if err != nil {
+                return 0, 0, err
+        }
+        sort.Sort(byModTime(files))
+        var pidFiles []os.FileInfo
+        for _, f := range files {
+                if _, err := strconv.Atoi(f.Name()); err == nil && f.IsDir() {
+                        pidFiles = append(pidFiles, f)
+                }
+        }
+        sum, sSum := 0, 0
+        for _, pidFile := range pidFiles {
+                num, err := getThreadByPth(fName, pidFile.Name())
+                if err != nil {
+                        return 0, 0, err
+                        //glog.Errorf("pid: %s; err: %v.", pidFile.Name(), err)
+                }else{
+                        //glog.Errorf("pid: %s; thread: %d", pidFile.Name(), num)
+                        sum += num
+                }
+		if sNum, err := GetSocket(fName, pidFile.Name()); err != nil {
+			return 0, 0, err
+		}else{
+			sSum += sNum
+		}
+
+        }
+        // glog.Errorf("there are thread: %d.", sum)
+        return sum, sSum, nil
+}
+
+func getInode(name string) string {
+        // socket:[22744]
+        tmp := strings.Replace(name, "socket:[", "", -1)
+        tmp = strings.Replace(tmp, "]", "", -1)
+        return tmp
 }

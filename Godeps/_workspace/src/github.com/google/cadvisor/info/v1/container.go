@@ -41,6 +41,11 @@ type MemorySpec struct {
 	SwapLimit uint64 `json:"swap_limit,omitempty"`
 }
 
+// wsj add
+type BoncSpec struct {
+	Threads uint32 `json:"threads, omitempty"`
+}
+
 type ContainerSpec struct {
 	// Time at which the container was created.
 	CreationTime time.Time `json:"creation_time,omitempty"`
@@ -65,6 +70,10 @@ type ContainerSpec struct {
 
 	HasCustomMetrics bool         `json:"has_custom_metrics"`
 	CustomMetrics    []MetricSpec `json:"custom_metrics,omitempty"`
+
+	// wsj add
+	HasBoncMetrics bool	`json:"has_bonc_metrics"`
+	Bonc BoncSpec		`json:"bonc,omitempty"`
 
 	// Image name used for this container.
 	Image string `json:"image,omitempty"`
@@ -361,6 +370,12 @@ type InterfaceStats struct {
 	TxDropped uint64 `json:"tx_dropped"`
 }
 
+// wsj add
+type BoncStats struct {
+	Threads uint32 `json:"threads,omitempty"`
+	Sockets uint32 `json:"sockets, omitempty"`
+}
+
 type NetworkStats struct {
 	InterfaceStats `json:",inline"`
 	Interfaces     []InterfaceStats `json:"interfaces,omitempty"`
@@ -489,6 +504,8 @@ type ContainerStats struct {
 
 	//Custom metrics from all collectors
 	CustomMetrics map[string][]MetricVal `json:"custom_metrics,omitempty"`
+	//Bonc metrics from all collectors
+	BoncMetrics BoncStats `json:"bonc_stats,omitempty"`
 }
 
 func timeEq(t1, t2 time.Time, tolerance time.Duration) bool {
