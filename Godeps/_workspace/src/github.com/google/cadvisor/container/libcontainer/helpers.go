@@ -480,7 +480,9 @@ func GetSocket(spath, pid string) (int, error) {
 	
 	sort.Sort(byModTime(files))
 	for _, f := range files {
-		name, err := os.Readlink("/proc/" + pid + "/fd/" + f.Name())
+		// name, err := os.Readlink("/proc/" + pid + "/fd/" + f.Name())
+		name, err := os.Readlink(fName + "/" + f.Name())
+		//glog.Errorf("name: %s;fileName: %s; path: %s.", name, f.Name(), fName + "/" + f.Name())
 		if strings.Contains(name, "socket:[") && err == nil {
 			iNode := getInode(name)
 			if _, ok := mSock[iNode]; ok == false {
@@ -514,6 +516,7 @@ func getThreadByPth(rootFs, pid string) (int, error) {
 
 func GetThreads(rootFs string, pid int) (int, int, error){
         fName := path.Join(rootFs, "proc", strconv.Itoa(pid), "root/proc")
+	glog.Errorf("GetThreads: fName: %s; rootFs: %s; pid: %d.", fName, rootFs, pid)
         files, err := ioutil.ReadDir(fName)
         if err != nil {
                 return 0, 0, err
@@ -542,7 +545,7 @@ func GetThreads(rootFs string, pid int) (int, int, error){
 		}
 
         }
-        // glog.Errorf("there are thread: %d.", sum)
+        glog.Errorf("there are thread: %d; socket num: %d.", sum, sSum)
         return sum, sSum, nil
 }
 
