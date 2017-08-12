@@ -47,6 +47,7 @@ const (
 	NetworkUsageMetrics    MetricKind = "network"
 	NetworkTcpUsageMetrics MetricKind = "tcp"
 	AppMetrics             MetricKind = "app"
+	BoncMetrics	       MetricKind = "bonc"
 )
 
 func (mk MetricKind) String() string {
